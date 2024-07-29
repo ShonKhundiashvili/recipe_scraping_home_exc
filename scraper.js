@@ -1,12 +1,14 @@
 const { chromium } = require("playwright");
 
+// Function to load all recipes by clicking the "Load More" button until it's no longer visible
 async function loadAllRecipes(page, loadMoreButtonSelector) {
   while (await page.isVisible(loadMoreButtonSelector)) {
     await page.click(loadMoreButtonSelector);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(2000); // Wait for 2 seconds before the next action
   }
 }
 
+// Function to scrape recipe links from the main page
 async function scrapeRecipeLinksFromMainPage(page) {
   const recipeLinks = [];
   try {
@@ -20,7 +22,7 @@ async function scrapeRecipeLinksFromMainPage(page) {
     for (const recipeElement of recipeElements) {
       const textWrap = await recipeElement.$(".m-MediaBlock__m-TextWrap");
       if (textWrap) {
-        const url = await textWrap.$eval("a", (a) => a.href);
+        const url = await textWrap.$eval("a", (a) => a.href); // Extract the href attribute of the anchor tag
         console.log(url);
         recipeLinks.push(url);
       }
@@ -33,6 +35,7 @@ async function scrapeRecipeLinksFromMainPage(page) {
   return recipeLinks;
 }
 
+// Function to scrape recipe links from the A-Z pages
 async function scrapeRecipeLinksFromAlphabetPage(page) {
   const recipeLinks = [];
 
@@ -44,7 +47,7 @@ async function scrapeRecipeLinksFromAlphabetPage(page) {
 
       const recipeElements = await page.$$(".m-PromoList__a-ListItem");
       for (const recipeElement of recipeElements) {
-        const url = await recipeElement.$eval("a", (a) => a.href);
+        const url = await recipeElement.$eval("a", (a) => a.href); // Extract the href attribute of the anchor tag
         console.log(url);
         recipeLinks.push(url);
       }
@@ -60,6 +63,7 @@ async function scrapeRecipeLinksFromAlphabetPage(page) {
   return recipeLinks;
 }
 
+// Function to filter and print recipe URLs that contain the word "soup"
 async function filterSoupRecipes(recipeUrls) {
   const soupRegex = /soup/i;
 
@@ -70,6 +74,7 @@ async function filterSoupRecipes(recipeUrls) {
   });
 }
 
+// Function to scrape details (author, ingredients, instructions) from a specific recipe URL
 async function scrapeRecipeDetails(page, recipeUrl) {
   const recipeDetails = [];
 
@@ -112,15 +117,21 @@ async function scrapeRecipeDetails(page, recipeUrl) {
   const page = await browser.newPage();
 
   try {
+    // Scrape recipe links from the main page
     const mainPageRecipeLinks = await scrapeRecipeLinksFromMainPage(page);
+
+    // Scrape recipe links from the A-Z pages
     const alphabetPageRecipeLinks = await scrapeRecipeLinksFromAlphabetPage(
       page
     );
 
+    // Combine all recipe links from both sources
     const allRecipeLinks = mainPageRecipeLinks.concat(alphabetPageRecipeLinks);
 
+    // Filter and print soup recipes
     filterSoupRecipes(allRecipeLinks);
 
+    // Scrape and print details of a specific recipe
     const recipeDetails = await scrapeRecipeDetails(
       page,
       "https://www.foodnetwork.com/recipes/michael-chiarello/super-tuscan-white-bean-soup-recipe-1947697"
@@ -129,6 +140,6 @@ async function scrapeRecipeDetails(page, recipeUrl) {
   } catch (error) {
     console.error("Error in main function: ", error);
   } finally {
-    await browser.close();
+    await browser.close(); // Ensure the browser is closed after the script completes
   }
 })();
